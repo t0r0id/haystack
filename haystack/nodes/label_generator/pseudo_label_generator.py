@@ -144,29 +144,37 @@ class PseudoLabelGenerator(BaseComponent):
         question_pos_doc_neg_doc: List[Dict[str, str]] = []
         batch_size = batch_size if batch_size else self.batch_size
 
+        queries = []
+        pos_docs = []
+        for i in tqdm(range(0, len(question_doc_pairs)), disable=not self.progress_bar, desc="Mine negatives: Flattening"):
+            queries.append(question_pos_doc_neg_doc[i]["question"])
+            pos_docs.append(question_pos_doc_neg_doc[i]["document"])
+
+        all_docs = []
         for i in tqdm(
-            range(0, len(question_doc_pairs), batch_size), disable=not self.progress_bar, desc="Mine negatives"
+            range(0, len(question_doc_pairs), batch_size), disable=not self.progress_bar, desc="Mine negatives: Retrieval"
         ):
             # question in batches to minimize network latency
             i_end = min(i + batch_size, len(question_doc_pairs))
-            qdp_batch = question_doc_pairs[i:i_end]
-            queries = [e["question"] for e in qdp_batch]
+            queries_batch = queries[i:i_end]
 
             docs: List[List[Document]] = self.retriever.retrieve_batch(
-                queries=queries, top_k=self.top_k, batch_size=batch_size
+                queries=queries_batch, top_k=self.top_k, batch_size=batch_size
             )
+            all_docs.extend(docs)
 
-            # iterate through queries and find negatives
-            for j in range(len(docs)):
-                top_docs = docs[j]
-                pos_doc = qdp_batch[j]["document"]
-                question = queries[j]
-                random.shuffle(top_docs)
-                for doc_item in top_docs:
-                    neg_doc = doc_item.content
-                    if neg_doc != pos_doc:
-                        question_pos_doc_neg_doc.append({"question": question, "pos_doc": pos_doc, "neg_doc": neg_doc})
-                        break
+        # iterate through queries and find negatives
+        # for question, pos_doc, top_docs in zip(queries, pos_docs, all_docs):
+        for i in tqdm(range(0, len(all_docs)), disable=not self.progress_bar, desc="Mine negatives: Find negatives"):
+            question = queries[i]
+            pos_doc = pos_docs[i]
+            top_docs = all_docs[i]
+            random.shuffle(top_docs)
+            for doc_item in top_docs:
+                neg_doc = doc_item.content
+                if neg_doc != pos_doc:
+                    question_pos_doc_neg_doc.append({"question": question, "pos_doc": pos_doc, "neg_doc": neg_doc})
+                    break
         return question_pos_doc_neg_doc
 
     def generate_margin_scores(
@@ -196,7 +204,7 @@ class PseudoLabelGenerator(BaseComponent):
         examples: List[Dict] = []
         batch_size = batch_size if batch_size else self.batch_size
         for i in tqdm(range(0, len(mined_negatives), batch_size), disable=not self.progress_bar, desc="Score margin"):
-            negatives_batch = mined_negatives[i : i + batch_size]
+            negatives_batch = mined_negatives[i: i + batch_size]
             pb = []
             for item in negatives_batch:
                 pb.append([item["question"], item["pos_doc"]])
