@@ -146,13 +146,17 @@ class PseudoLabelGenerator(BaseComponent):
 
         queries = []
         pos_docs = []
-        for i in tqdm(range(0, len(question_doc_pairs)), disable=not self.progress_bar, desc="Mine negatives: Flattening"):
+        for i in tqdm(
+            range(0, len(question_doc_pairs)), disable=not self.progress_bar, desc="Mine negatives: Flattening"
+        ):
             queries.append(question_pos_doc_neg_doc[i]["question"])
             pos_docs.append(question_pos_doc_neg_doc[i]["document"])
 
         all_docs = []
         for i in tqdm(
-            range(0, len(question_doc_pairs), batch_size), disable=not self.progress_bar, desc="Mine negatives: Retrieval"
+            range(0, len(question_doc_pairs), batch_size),
+            disable=not self.progress_bar,
+            desc="Mine negatives: Retrieval",
         ):
             # question in batches to minimize network latency
             i_end = min(i + batch_size, len(question_doc_pairs))
@@ -204,7 +208,7 @@ class PseudoLabelGenerator(BaseComponent):
         examples: List[Dict] = []
         batch_size = batch_size if batch_size else self.batch_size
         for i in tqdm(range(0, len(mined_negatives), batch_size), disable=not self.progress_bar, desc="Score margin"):
-            negatives_batch = mined_negatives[i: i + batch_size]
+            negatives_batch = mined_negatives[i : i + batch_size]
             pb = []
             for item in negatives_batch:
                 pb.append([item["question"], item["pos_doc"]])
