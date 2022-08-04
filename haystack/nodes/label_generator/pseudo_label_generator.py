@@ -149,15 +149,18 @@ class PseudoLabelGenerator(BaseComponent):
         ):
             # question in batches to minimize network latency
             i_end = min(i + batch_size, len(question_doc_pairs))
-            queries: List[str] = [e["question"] for e in question_doc_pairs[i:i_end]]
-            pos_docs: List[str] = [e["document"] for e in question_doc_pairs[i:i_end]]
+            qdp_batch = question_doc_pairs[i:i_end]
+            queries = [e["question"] for e in qdp_batch]
 
             docs: List[List[Document]] = self.retriever.retrieve_batch(
                 queries=queries, top_k=self.top_k, batch_size=batch_size
             )
 
             # iterate through queries and find negatives
-            for question, pos_doc, top_docs in zip(queries, pos_docs, docs):
+            for j in range(len(docs)):
+                top_docs = docs[j]
+                pos_doc = qdp_batch[j]['document']
+                question = queries[j]
                 random.shuffle(top_docs)
                 for doc_item in top_docs:
                     neg_doc = doc_item.content
