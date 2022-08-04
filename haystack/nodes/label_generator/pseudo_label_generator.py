@@ -182,7 +182,7 @@ class PseudoLabelGenerator(BaseComponent):
         return question_pos_doc_neg_doc
 
     def generate_margin_scores(
-        self, mined_negatives: List[Dict[str, str]], batch_size: Optional[int] = None
+        self, mined_negatives: List[Dict[str, str]], batch_size: Optional[int] = None, num_workers: int = 0
     ) -> List[Dict]:
         """
         Given a list of mined negatives, this function predicts the score margin between the positive and negative document using
@@ -213,7 +213,7 @@ class PseudoLabelGenerator(BaseComponent):
             for item in negatives_batch:
                 pb.append([item["question"], item["pos_doc"]])
                 pb.append([item["question"], item["neg_doc"]])
-            scores = self.cross_encoder.predict(pb)
+            scores = self.cross_encoder.predict(pb, num_workers=num_workers)
             for idx, item in enumerate(negatives_batch):
                 scores_idx = idx * 2
                 score_margin = scores[scores_idx] - scores[scores_idx + 1]
@@ -227,7 +227,9 @@ class PseudoLabelGenerator(BaseComponent):
                 )
         return examples
 
-    def generate_pseudo_labels(self, documents: List[Document], batch_size: Optional[int] = None) -> Tuple[dict, str]:
+    def generate_pseudo_labels(
+            self, documents: List[Document], batch_size: Optional[int] = None, num_workers: int = 0
+    ) -> Tuple[dict, str]:
         """
         Given a list of documents, this function generates a list of question-document pairs, mines for negatives, and
         scores a positive/negative margin with cross-encoder. The output is the training data for the
@@ -254,7 +256,9 @@ class PseudoLabelGenerator(BaseComponent):
         mined_negatives = self.mine_negatives(question_doc_pairs=question_doc_pairs, batch_size=batch_size)
 
         # step 3: pseudo labeling (scoring) with cross-encoder
-        pseudo_labels: List[Dict[str, str]] = self.generate_margin_scores(mined_negatives, batch_size=batch_size)
+        pseudo_labels: List[Dict[str, str]] = self.generate_margin_scores(
+            mined_negatives, batch_size=batch_size, num_workers=num_workers
+        )
         return {"gpl_labels": pseudo_labels}, "output_1"
 
     def run(self, documents: List[Document]) -> Tuple[dict, str]:  # type: ignore
