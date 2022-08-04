@@ -207,24 +207,36 @@ class PseudoLabelGenerator(BaseComponent):
         """
         examples: List[Dict] = []
         batch_size = batch_size if batch_size else self.batch_size
-        for i in tqdm(range(0, len(mined_negatives), batch_size), disable=not self.progress_bar, desc="Score margin"):
-            negatives_batch = mined_negatives[i : i + batch_size]
-            pb = []
-            for item in negatives_batch:
-                pb.append([item["question"], item["pos_doc"]])
-                pb.append([item["question"], item["neg_doc"]])
-            scores = self.cross_encoder.predict(pb, num_workers=num_workers)
-            for idx, item in enumerate(negatives_batch):
-                scores_idx = idx * 2
-                score_margin = scores[scores_idx] - scores[scores_idx + 1]
-                examples.append(
-                    {
-                        "question": item["question"],
-                        "pos_doc": item["pos_doc"],
-                        "neg_doc": item["neg_doc"],
-                        "score": score_margin,
-                    }
-                )
+        # all_scores = []
+        # for i in tqdm(range(0, len(mined_negatives), batch_size), disable=not self.progress_bar, desc="Score margin"):
+        #     negatives_batch = mined_negatives[i : i + batch_size]
+        #     pb = []
+        #     for item in negatives_batch:
+        #         pb.append([item["question"], item["pos_doc"]])
+        #         pb.append([item["question"], item["neg_doc"]])
+        #     scores = self.cross_encoder.predict(pb, num_workers=num_workers)
+        #     all_scores.extend(scores)
+
+        pb = []
+        for item in mined_negatives:
+            pb.append([item["question"], item["pos_doc"]])
+            pb.append([item["question"], item["neg_doc"]])
+
+        all_scores = self.cross_encoder.predict(
+            pb, batch_size=batch_size, num_workers=num_workers, show_progress_bar=self.progress_bar
+        )
+
+        for idx, item in enumerate(mined_negatives):
+            scores_idx = idx * 2
+            score_margin = all_scores[scores_idx] - all_scores[scores_idx + 1]
+            examples.append(
+                {
+                    "question": item["question"],
+                    "pos_doc": item["pos_doc"],
+                    "neg_doc": item["neg_doc"],
+                    "score": score_margin,
+                }
+            )
         return examples
 
     def generate_pseudo_labels(
