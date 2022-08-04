@@ -149,8 +149,8 @@ class PseudoLabelGenerator(BaseComponent):
         for i in tqdm(
             range(0, len(question_doc_pairs)), disable=not self.progress_bar, desc="Mine negatives: Flattening"
         ):
-            queries.append(question_pos_doc_neg_doc[i]["question"])
-            pos_docs.append(question_pos_doc_neg_doc[i]["document"])
+            queries.append(question_doc_pairs[i]["question"])
+            pos_docs.append(question_doc_pairs[i]["document"])
 
         all_docs = []
         for i in tqdm(
