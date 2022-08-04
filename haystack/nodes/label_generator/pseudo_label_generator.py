@@ -159,7 +159,7 @@ class PseudoLabelGenerator(BaseComponent):
             # iterate through queries and find negatives
             for j in range(len(docs)):
                 top_docs = docs[j]
-                pos_doc = qdp_batch[j]['document']
+                pos_doc = qdp_batch[j]["document"]
                 question = queries[j]
                 random.shuffle(top_docs)
                 for doc_item in top_docs:
