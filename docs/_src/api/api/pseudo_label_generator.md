@@ -115,7 +115,7 @@ and negative document.
 #### PseudoLabelGenerator.generate\_margin\_scores
 
 ```python
-def generate_margin_scores(mined_negatives: List[Dict[str, str]], batch_size: Optional[int] = None) -> List[Dict]
+def generate_margin_scores(mined_negatives: List[Dict[str, str]], batch_size: Optional[int] = None, num_workers: int = 0) -> List[Dict]
 ```
 
 Given a list of mined negatives, this function predicts the score margin between the positive and negative document using
@@ -147,7 +147,7 @@ A list of dictionaries, each of which has the following keys:
 #### PseudoLabelGenerator.generate\_pseudo\_labels
 
 ```python
-def generate_pseudo_labels(documents: List[Document], batch_size: Optional[int] = None) -> Tuple[dict, str]
+def generate_pseudo_labels(documents: List[Document], batch_size: Optional[int] = None, num_workers: int = 0) -> Tuple[dict, str]
 ```
 
 Given a list of documents, this function generates a list of question-document pairs, mines for negatives, and
