@@ -228,7 +228,7 @@ class PseudoLabelGenerator(BaseComponent):
         return examples
 
     def generate_pseudo_labels(
-            self, documents: List[Document], batch_size: Optional[int] = None, num_workers: int = 0
+        self, documents: List[Document], batch_size: Optional[int] = None, num_workers: int = 0
     ) -> Tuple[dict, str]:
         """
         Given a list of documents, this function generates a list of question-document pairs, mines for negatives, and
